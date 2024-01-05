@@ -21,6 +21,10 @@ jobs:
           options: -v ${{github.workspace}}:/src
           run: |
             cd /src/rmc
+            echo "ID"
+            id -u
+            id -g
+            echo "LS"
             ls -lRa
             make debian
             ls -lR
