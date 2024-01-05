@@ -4,9 +4,31 @@ on:
   - push
 
 jobs:
+  checkout:
+    runs-on: ubuntu-latest
+    env:
+      DESTDIR: ./out
+    steps:
+      - run: echo "Build ${{github.event_name}} event."
+      - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          path: ./rmc
+
+      - name: Cache checked out code for docker
+        id: cache-rmc-build
+        uses: actions/cache@v3
+        with: 
+          path: rmc
+          key: ${{runner.os}}-build-rmc-docker
     
   build:
     runs-on: ubuntu-latest
+    needs: checkout
     env:
       DESTDIR: ./out
 
@@ -14,11 +36,15 @@ jobs:
       image: magnusfeuer/reliable-multicast-build:latest
 
     steps:
+        id: restore-rmc-build
+        uses: actions/cache@v3
+        with:
+          path: rmc
+          key: ${{runner.os}}-build-rmc-docker
       - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
       - run: echo "The workflow is now ready to test your code on the runner."
       - run: echo "This job's status is ${{ job.status }}."
-      - name: Check out code
-        uses: actions/checkout@v4
       - run: echo "Workspace is ${{ github.workspace }}."
       - run: pwd
       - run: ls -R ${{ github.workspace }}
+        
