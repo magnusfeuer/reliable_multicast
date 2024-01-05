@@ -23,8 +23,8 @@ jobs:
           image: magnusfeuer/reliable-multicast-build:latest
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-          options: |
-            -v ${{github.workspace}}/docker-build/scripts:/scripts \
-            -v ${{github.workspace}}/rmc:/src 
+#          options: |
+#            -v ${{github.workspace}}/docker-build/scripts:/scripts \
+#            -v ${{github.workspace}}/rmc:/src 
           run: |
             ls -R
