@@ -20,6 +20,6 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
           options: -v ${{github.workspace}}:/src
           run: |
-            cd /src
+            cd /src/rmc
             make debian
             ls -lR
