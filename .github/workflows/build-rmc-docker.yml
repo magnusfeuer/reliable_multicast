@@ -15,14 +15,16 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
         with:
-          path: ./rmc
+          path: ./
 
       - name: Run build process with repo
         uses: addnab/docker-run-action@v3
         with:
           image: magnusfeuer/reliable-multicast-build:latest
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
           options: |
             -v ${{github.workspace}}/docker-build/scripts:/scripts \
             -v ${{github.workspace}}/rmc:/src 
           run: |
-            build
+            ls -R
