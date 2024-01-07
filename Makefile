@@ -48,8 +48,9 @@ HDR=    ${INST_HDR} \
 LIB_TARGET=librmc.a
 VERSION ?= $(shell grep -v '#' VERSION)
 VERSION_MAJOR ?= $(word 1, $(subst ., ,$(VERSION)))
-LIB_SO_TARGET=librmc.so.${VERSION}
-LIB_SO_SONAME_TARGET=librmc.so.${VERSION_MAJOR}
+LIB_SO_BASE_NAME=librmc.so
+LIB_SO_TARGET=${LIB_SO_BASE_NAME}.${VERSION}
+LIB_SO_SONAME_TARGET=${LIB_SO_BASE_NAME}.${VERSION_MAJOR}
 ARCHITECTURE=amd64
 TEST_TARGET=rmc_test
 
@@ -63,7 +64,12 @@ CFLAGS ?= -O2 -fpic -Wall -D_GNU_SOURCE
 PACKAGE_BASE_NAME=reliable-multicast
 DEBIAN_PACKAGE_BASE_NAME=${PACKAGE_BASE_NAME}_${VERSION}-1_${ARCHITECTURE}
 DEBIAN_PACKAGE_NAME=${DEBIAN_PACKAGE_BASE_NAME}.deb
-DEBIAN_PACKAGE_DEV_NAME=${DEBIAN_PACKAGE_BASE_NAME}-dev.deb
+
+PACKAGE_DEV_BASE_NAME=reliable-multicast-dev
+DEBIAN_PACKAGE_DEV_BASE_NAME=${PACKAGE_DEV_BASE_NAME}_${VERSION}-1_all
+DEBIAN_PACKAGE_DEV_NAME=${DEBIAN_PACKAGE_DEV_BASE_NAME}.deb
+
+DEBIAN_INSTALL_DIR ?= /usr/local
 
 TARBALL_BASE_NAME=${PACKAGE_BASE_NAME}-${VERSION}
 TARBALL_NAME=${TARBALL_BASE_NAME}.tar.gz
@@ -93,6 +99,7 @@ install: all uninstall
 	install -m 0644 ${LIB_TARGET} ${DESTDIR}/lib
 	install -m 0644 ${LIB_SO_TARGET} ${DESTDIR}/lib/
 	(cd ${DESTDIR}/lib && ln -s ${LIB_SO_TARGET} ${LIB_SO_SONAME_TARGET})
+	(cd ${DESTDIR}/lib && ln -s ${LIB_SO_TARGET} ${LIB_SO_BASE_NAME})
 	install -m 0755 ${TEST_TARGET} ${DESTDIR}/bin/
 	install -m 0644 ${INST_HDR} ${DESTDIR}/include
 
@@ -100,6 +107,7 @@ uninstall:
 	rm -f ${DESTDIR}/lib/${LIB_TARGET}
 	rm -f ${DESTDIR}/lib/${LIB_SO_TARGET}
 	rm -f ${DESTDIR}/lib/${LIB_SO_SONAME_TARGET}
+	rm -f ${DESTDIR}/lib/${LIB_SO_BASE_NAME}
 	rm -f ${DESTDIR}/bin/${TEST_TARGET}
 	-(cd ${DESTDIR}/include && rm -f ${INST_HDR})
 
@@ -115,35 +123,39 @@ debian: ${DEBIAN_PACKAGE_DEV_NAME} ${DEBIAN_PACKAGE_NAME}
 
 ${DEBIAN_PACKAGE_NAME}: DESTDIR=/tmp/rmc-install
 ${DEBIAN_PACKAGE_NAME}: install
+	rm -f ${DEBIAN_PACKAGE_NAME}
 	fpm -s dir -t deb \
 		-p ${@} \
 		--name ${PACKAGE_BASE_NAME} \
+		--prefix ${DEBIAN_INSTALL_DIR} \
 		--license mplv2 \
 		--version ${VERSION} \
 		--architecture ${ARCHITECTURE} \
-		--deb-shlibs "librmc ${VERSION_MAJOR} ${LIB_SO_SONAME_TARGET} (>= ${VERSION})" \
 		--depends "libc6 (>= 2.31)" \
 		--description "Reliable Multicast library" \
 		--url "https://github.com/magnusfeuer/reliable_multicast" \
 		--maintainer "Magnus Feuer" \
-		${DESTDIR}/lib/librmc.so.${VERSION_MAJOR}=/usr/local/lib/librmc.so.${VERSION_MAJOR} \
-		${DESTDIR}/lib/librmc.so.${VERSION}=/usr/local/lib/librmc.so.${VERSION} \
-		${DESTDIR}/bin/rmc_test=/usr/local/bin/rmc_test
+		${DESTDIR}/lib/${LIB_SO_SONAME_TARGET}=lib/${LIB_SO_SONAME_TARGET} \
+		${DESTDIR}/lib/${LIB_SO_TARGET}=lib/${LIB_SO_TARGET} \
+		${DESTDIR}/lib/${LIB_SO_BASE_NAME}=lib/${LIB_SO_BASE_NAME} \
+		${DESTDIR}/bin/rmc_test=bin/rmc_test
 
 ${DEBIAN_PACKAGE_DEV_NAME}: DESTDIR=/tmp/rmc-install
 ${DEBIAN_PACKAGE_DEV_NAME}: install
+	rm -f ${DEBIAN_PACKAGE_DEV_NAME}
 	fpm -s dir -t deb \
 		-p ${@} \
-		--name ${PACKAGE_BASE_NAME} \
+		--name ${PACKAGE_DEV_BASE_NAME} \
 		--license mplv2 \
 		--version ${VERSION} \
-		--architecture any \
+		--prefix ${DEBIAN_INSTALL_DIR} \
+		--architecture all \
 		--description "Reliable Multicast development package" \
 		--url "https://github.com/magnusfeuer/reliable_multicast" \
 		--maintainer "Magnus Feuer" \
-		${DESTDIR}/include/reliable_multicast.h=/usr/local/include/reliable_multicast.h \
-		${DESTDIR}/include/rmc_list.h=/usr/local/include/rmc_list.h \
-		${DESTDIR}/include/rmc_list_template.h=/usr/local/include/rmc_list_template.h
+		${DESTDIR}/include/reliable_multicast.h=include/reliable_multicast.h \
+		${DESTDIR}/include/rmc_list.h=include/rmc_list.h \
+		${DESTDIR}/include/rmc_log.h=include/rmc_log.h
 
 etags:
 	@rm -f TAGS
