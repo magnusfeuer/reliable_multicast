@@ -1,8 +1,10 @@
 #
 # Makefile to build binaries, tests, tarballs, and debian packages.
-# To make life easier, consider using the Reliable Multicast build docker container:
-# github.com/magnusfeuer/rmc-docker-build
-# 
+#
+#
+# To make life easier, consider using the docker generic build
+# container. See README.md for details
+#
 
 OBJ= pub.o \
 	time.o \
